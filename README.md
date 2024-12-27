@@ -121,8 +121,13 @@ docker rm mongodb redis
    ```bash
    npm run build
    ```
+   
+5. Seed data in database:
+   ```bash
+   npm run seed
+   ```
 
-5. Start the server:
+6. Start the server:
    ```bash
    npm start
    ```
