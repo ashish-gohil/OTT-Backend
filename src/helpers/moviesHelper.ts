@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import Movie from "../db/models/moviesModel"; // Import your Movie Mongoose model
+import { cache } from "../cache/redisCache";
 
 export const getMovies = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -98,7 +99,7 @@ export const deleteMovie = async (req: Request, res: Response) => {
   }
 };
 
-//seqarch moview based on title or generes
+//seqarch moview based on title or generes -> hit cache if key is present in cache
 export const searchMovies = async (
   req: Request,
   res: Response
@@ -111,12 +112,16 @@ export const searchMovies = async (
         .json({ message: "Query parameter 'q' is required." });
     }
 
-    const movies = await Movie.find({
-      $or: [
-        { title: { $regex: query, $options: "i" } },
-        { genre: { $regex: query, $options: "i" } },
-      ],
-    });
+    const cacheKey = `movies:search:${query}`;
+    const dataFunc = async () =>
+      await Movie.find({
+        $or: [
+          { title: { $regex: query, $options: "i" } },
+          { genre: { $regex: query, $options: "i" } },
+        ],
+      });
+
+    const movies = await cache(cacheKey, dataFunc);
 
     res.status(200).json(movies);
   } catch (error: any) {
